@@ -6,6 +6,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ludo.engine.*
+import kotlin.random.Random
 
 data class GameUiState(
     val game: GameState,
@@ -21,12 +22,17 @@ data class GameUiState(
     val message: String? = null,
 )
 
+/** A seat at the table: a human, or a bot of the given difficulty. */
+data class Seat(val name: String, val bot: Difficulty? = null)
+
 class GameViewModel(
     initial: GameState = newGame(defaultColors(4)),
+    val seats: List<Seat> = initial.players.map { Seat(it.color.name.lowercase().replaceFirstChar(Char::uppercase)) },
     private val dice: DiceRoller = RandomDice,
     private val autoMove: Boolean = true,
     private val speed: Float = 1f,
 ) : ViewModel() {
+    private val bots = seats.map { seat -> seat.bot?.let { botFor(it) } }
     private val _state = MutableStateFlow(GameUiState(initial, initial.players.map { it.tokens }))
     val state: StateFlow<GameUiState> = _state.asStateFlow()
 
@@ -34,10 +40,15 @@ class GameViewModel(
     private val _events = MutableSharedFlow<GameEvent>(extraBufferCapacity = 64)
     val events: SharedFlow<GameEvent> = _events.asSharedFlow()
 
+    init { maybeBot() }
+
     val hopMs: Int get() = wait(120).toInt()
     private fun wait(ms: Long) = (ms / speed).toLong()
 
-    fun onRoll() {
+    /** Human roll; ignored on a bot's turn. */
+    fun onRoll() { if (bots[_state.value.game.current] == null) roll() }
+
+    private fun roll() {
         val s = _state.value
         if (s.busy || s.game.phase != Phase.ROLLING) return
         _state.update { it.copy(busy = true, rolling = true, message = null) }
@@ -49,7 +60,11 @@ class GameViewModel(
             _state.update { it.copy(rolling = false, diceValue = v) }
             if (r.state.phase == Phase.CHOOSING_MOVE) {
                 val moves = legalMoves(r.state)
-                if (autoMove && moves.size == 1) {
+                val bot = bots[r.state.current]
+                if (bot != null) {
+                    delay(botDelay())
+                    play(r.state, bot.choose(r.state, moves))
+                } else if (autoMove && moves.size == 1) {
                     delay(wait(350))
                     play(r.state, moves.single())
                 } else _state.update { it.copy(game = r.state, movable = moves.map { m -> m.token }.toSet(), busy = false) }
@@ -58,6 +73,7 @@ class GameViewModel(
                 _state.update { it.copy(message = if (why == ForfeitReason.TRIPLE_SIX) "Three sixes! Turn lost" else "No move") }
                 delay(wait(900))
                 _state.update { it.copy(game = r.state, message = null, busy = false) }
+                maybeBot()
             }
         }
     }
@@ -93,6 +109,16 @@ class GameViewModel(
             }
         }
         _state.update { it.copy(game = r.state, shown = r.state.players.map { p -> p.tokens }, busy = false) }
+        maybeBot()
+    }
+
+    private fun botDelay() = wait(Random.nextLong(500, 901))
+
+    /** If it is a bot's turn to roll, roll after a readable pause. */
+    private fun maybeBot() {
+        val g = _state.value.game
+        if (g.phase != Phase.ROLLING || bots[g.current] == null) return
+        viewModelScope.launch { delay(botDelay()); roll() }
     }
 
     private fun setShown(player: Int, token: Int, pos: Int) = _state.update { st ->

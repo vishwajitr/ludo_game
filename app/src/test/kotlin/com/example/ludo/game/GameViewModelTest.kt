@@ -13,7 +13,7 @@ class GameViewModelTest {
 
     private fun vm(vararg rolls: Int, auto: Boolean = true, start: GameState = newGame(defaultColors(2))): GameViewModel {
         val it = rolls.iterator()
-        return GameViewModel(start, { it.next() }, auto)
+        return GameViewModel(start, dice = { it.next() }, autoMove = auto)
     }
 
     @Test fun `no legal move passes the turn after showing a message`() = runTest {
@@ -64,5 +64,23 @@ class GameViewModelTest {
         assertEquals(11, m.state.value.shown[0][0])
         advanceUntilIdle()
         assertEquals(13, m.state.value.shown[0][0])
+    }
+
+    @Test fun `bot seat plays its own turn then hands back to the human`() = runTest {
+        val rolls = listOf(3, 6, 3).iterator() // human forfeits; bot leaves yard (6), then moves 3
+        val m = GameViewModel(newGame(defaultColors(2)), listOf(Seat("Me"), Seat("Bot", Difficulty.HARD)), { rolls.next() })
+        m.onRoll(); advanceUntilIdle()
+        val s = m.state.value
+        assertEquals(0, s.game.current)
+        assertEquals(3, s.game.players[1].tokens.max())
+        assertFalse(s.busy)
+    }
+
+    @Test fun `human cannot roll on a bot's turn`() = runTest {
+        val m = GameViewModel(newGame(defaultColors(2)), listOf(Seat("Bot", Difficulty.EASY), Seat("Me")), { 3 })
+        advanceTimeBy(100) // bot hasn't started yet
+        m.onRoll() // ignored: bot is current
+        assertFalse(m.state.value.busy)
+        advanceUntilIdle()
     }
 }
