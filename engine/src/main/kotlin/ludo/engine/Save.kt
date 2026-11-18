@@ -10,7 +10,7 @@ data class SavedGame(val state: GameState, val seats: List<Seat>)
 
 /**
  * Compact text format, e.g. `v1;0101;0;0;0;ROLLING;;RED:0,-1,-1,-1:0/GREEN:...;Ann:-/Bot:HARD`.
- * Plain text keeps :engine dependency-free; decode returns null for anything malformed.
+ * Plain text keeps :engine dependency-free; decode returns null for anything malformed or not a between-turns state.
  */
 object SaveCodec {
     private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
@@ -42,6 +42,11 @@ object SaveCodec {
         val winners = p[6].split(",").filter { it.isNotEmpty() }.map { it.toInt() }
         val state = GameState(players, p[2].toInt(), p[3].toInt(), p[4].toInt(), Phase.valueOf(p[5]), winners, rules)
         require(players.size in 2..4 && seats.size == players.size && state.current in players.indices && winners.all { it in players.indices })
+        // Saves are only written between turns, so anything else is corrupt or tampered with. Without these checks a
+        // state with every player "finished" would make the turn rotation loop forever.
+        require(state.phase == Phase.ROLLING && state.dice == 0 && state.consecutiveSixes in 0..2)
+        require(winners.toSet().size == winners.size && winners.size <= players.size - 2 && state.current !in winners)
+        require(players.map { it.color }.toSet().size == players.size && seats.all { it.name.length <= 40 })
         SavedGame(state, seats)
     }.getOrNull()
 }

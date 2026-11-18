@@ -5,10 +5,12 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-// Release signing comes from keystore.properties (git-ignored; see keystore.properties.example).
-// Without it the release build is simply left unsigned.
+// Release signing comes from a keystore.properties file (see keystore.properties.example). Keep it, and the keystore,
+// outside this folder, e.g. ~/.ludo-signing/keystore.properties (storeFile may be an absolute path); a copy in the
+// project root also works. Without any, the release build is simply left unsigned.
 val keystoreProps = Properties().apply {
-    rootProject.file("keystore.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+    listOf(File(System.getProperty("user.home"), ".ludo-signing/keystore.properties"), rootProject.file("keystore.properties"))
+        .firstOrNull { it.exists() }?.inputStream()?.use { load(it) }
 }
 
 android {
@@ -26,7 +28,7 @@ android {
 
     signingConfigs {
         if (keystoreProps.isNotEmpty()) create("release") {
-            storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
+            storeFile = File(keystoreProps.getProperty("storeFile")).let { if (it.isAbsolute) it else rootProject.file(it.path) }
             storePassword = keystoreProps.getProperty("storePassword")
             keyAlias = keystoreProps.getProperty("keyAlias")
             keyPassword = keystoreProps.getProperty("keyPassword")
