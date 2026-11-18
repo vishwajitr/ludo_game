@@ -39,6 +39,12 @@ android {
         }
     }
     buildTypes {
+        // Debug builds always use Google's TEST ad ids, so testing on your own phone can never click real ads
+        // (that would get the AdMob account flagged for invalid traffic).
+        debug {
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-3940256099942544/9214589741\"")
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
