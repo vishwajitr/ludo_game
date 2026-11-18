@@ -16,11 +16,11 @@ class BoardGeometryTest {
     }
 
     @Test fun `start squares and stars are where Ludo puts them`() {
-        assertEquals(6 to 1, track[Color.RED.start])
-        assertEquals(1 to 8, track[Color.GREEN.start])
-        assertEquals(8 to 13, track[Color.YELLOW.start])
-        assertEquals(13 to 6, track[Color.BLUE.start])
-        assertEquals(2 to 6, track[8])
+        assertEquals(1 to 8, track[Color.RED.start])      // red top-right
+        assertEquals(8 to 13, track[Color.GREEN.start])   // green bottom-right
+        assertEquals(13 to 6, track[Color.YELLOW.start])  // yellow bottom-left
+        assertEquals(6 to 1, track[Color.BLUE.start])     // blue top-left
+        assertEquals(6 to 12, track[8])                   // red's star
     }
 
     @Test fun `home column continues from the last track square`() {

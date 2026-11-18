@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
@@ -94,7 +95,7 @@ fun GameScreen(
                 text = if (g.phase == Phase.GAME_OVER) "Game over: " + g.winners.joinToString(" > ") { vm.seats[it].name }
                 else "${seat.name}'s turn" + (seat.bot?.let { " (${it.name.lowercase()} bot)" } ?: ""),
             )
-            TextButton({ pause(true) }, Modifier.heightIn(min = 48.dp)) { Text("Pause") }
+            TextButton({ pause(true) }, Modifier.heightIn(min = 48.dp), colors = ButtonDefaults.textButtonColors(contentColor = androidx.compose.ui.graphics.Color.White)) { Text("Pause") }
         }
     }
     val controls = @Composable {

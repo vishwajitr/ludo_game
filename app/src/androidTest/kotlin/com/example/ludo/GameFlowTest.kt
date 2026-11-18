@@ -4,6 +4,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import com.example.ludo.game.GameViewModel
+import com.example.ludo.ui.BoardGeometry
 import com.example.ludo.ui.GameScreen
 import ludo.engine.*
 import org.junit.Rule
@@ -24,10 +25,11 @@ class GameFlowTest {
         rule.onNodeWithContentDescription("Dice", substring = true).performClick()
         rule.waitUntil(5_000) { vm.state.value.movable.isNotEmpty() }
 
-        // red's first yard slot is at (2, 2) in 15x15 board units
+        // tap the first red token in its yard (the pin stands about half a cell above its base point)
+        val slot = BoardGeometry.yardSlot(Color.RED, 0)
         rule.onNodeWithContentDescription("Ludo board", substring = true).performTouchInput {
             val u = width / 15f
-            click(Offset(2 * u, 2 * u))
+            click(Offset(slot.x * u, (slot.y - .5f) * u))
         }
         rule.waitUntil(5_000) { vm.state.value.game.players[0].tokens.contains(0) }
         assertEquals(1L, vm.state.value.game.players[0].tokens.count { it == 0 }.toLong())
