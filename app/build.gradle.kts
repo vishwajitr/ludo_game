@@ -33,7 +33,7 @@ dependencies {
     implementation(libs.core.ktx)
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
-    testImplementation(kotlin("test"))
+    testImplementation(kotlin("test-junit"))
     testImplementation(libs.junit4)
     testImplementation(libs.coroutines.test)
     androidTestImplementation(platform(libs.compose.bom))
