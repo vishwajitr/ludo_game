@@ -10,10 +10,12 @@ import com.example.ludo.ui.LudoApp
 
 class MainActivity : ComponentActivity() {
     private val container by lazy { AppContainer(applicationContext) }
+    private val ads by lazy { Ads(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { LudoApp(viewModel { AppViewModel(container) }) }
+        ads.start()
+        setContent { LudoApp(viewModel { AppViewModel(container) }, ads) }
     }
 }

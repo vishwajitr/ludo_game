@@ -9,6 +9,8 @@ coroutines = "1.11.0"
 coreKtx = "1.19.1"
 junit4 = "4.13.2"
 espresso = "3.7.0"
+ads = "25.5.0"
+ump = "4.0.0"
 
 [libraries]
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
@@ -26,6 +28,8 @@ coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-androi
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso" }
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "ads" }
+ump = { module = "com.google.android.ump:user-messaging-platform", version.ref = "ump" }
 junit4 = { module = "junit:junit", version.ref = "junit4" }
 
 [plugins]

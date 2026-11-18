@@ -1,7 +1,7 @@
 # Ludo for Android
 
 A Ludo game for 2–4 players: pass-and-play, or against Easy / Medium / Hard bots, with optional house rules.
-Kotlin, Jetpack Compose (Material 3), no ads, no analytics, no network permission.
+Kotlin, Jetpack Compose (Material 3). AdMob banners on menu screens only (behind Google's consent form); no analytics.
 
 ## Build
 
@@ -15,6 +15,8 @@ Requirements: JDK 17 and the Android SDK (platform 37; `local.properties` with `
 ```
 
 Package ID: `com.vishwajitr.ludo` (code package stays `com.example.ludo`). Play Store listing text, graphics and upload steps are in `store/LISTING.md`; the privacy policy is `PRIVACY.md`.
+
+AdMob ids default to Google's test ids in `gradle.properties`; put real ones in `~/.gradle/gradle.properties` (see `store/LISTING.md`).
 
 Release signing: copy `keystore.properties.example` to `keystore.properties` (git-ignored) and fill it in.
 Bump `VERSION_CODE` / `VERSION_NAME` in `gradle.properties` for each release.

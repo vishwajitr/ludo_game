@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import com.example.ludo.data.Settings
 
 @Composable
-fun SettingsScreen(s: Settings, update: ((Settings) -> Settings) -> Unit, onBack: () -> Unit) {
+fun SettingsScreen(s: Settings, update: ((Settings) -> Settings) -> Unit, onAdPrivacy: (() -> Unit)?, onBack: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
@@ -31,6 +31,9 @@ fun SettingsScreen(s: Settings, update: ((Settings) -> Settings) -> Unit, onBack
             Section("Appearance") {
                 SwitchRow("Dark mode", s.dark) { v -> update { it.copy(dark = v) } }
                 SwitchRow("Colorblind mode", s.colorblind, "Different shapes for each player's tokens") { v -> update { it.copy(colorblind = v) } }
+            }
+            if (onAdPrivacy != null) Section("Privacy") {
+                TextButton(onAdPrivacy, Modifier.heightIn(min = 48.dp)) { Text("Ad privacy settings") }
             }
             Section("Default house rules") {
                 HouseRules(s.rules) { v -> update { it.copy(rules = v) } }

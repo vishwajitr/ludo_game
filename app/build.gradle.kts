@@ -22,9 +22,13 @@ android {
         targetSdk = 37
         versionCode = providers.gradleProperty("VERSION_CODE").get().toInt()
         versionName = providers.gradleProperty("VERSION_NAME").get()
+        // AdMob ids come from gradle properties: Google's public TEST ids by default (gradle.properties); put your real
+        // ids in ~/.gradle/gradle.properties, which takes precedence and is never committed.
+        manifestPlaceholders["admobAppId"] = providers.gradleProperty("ADMOB_APP_ID").get()
+        buildConfigField("String", "ADMOB_BANNER_ID", "\"${providers.gradleProperty("ADMOB_BANNER_ID").get()}\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
 
     signingConfigs {
         if (keystoreProps.isNotEmpty()) create("release") {
@@ -49,6 +53,14 @@ kotlin {
     compilerOptions { allWarningsAsErrors = true }
 }
 
+// Shipping the test ad ids would earn nothing, so say so loudly when a release is built with them.
+tasks.configureEach {
+    if (name == "bundleRelease" || name == "assembleRelease") doFirst {
+        if (providers.gradleProperty("ADMOB_APP_ID").get().contains("3940256099942544"))
+            logger.warn("WARNING: building a release with Google's TEST AdMob ids; set ADMOB_APP_ID and ADMOB_BANNER_ID in ~/.gradle/gradle.properties")
+    }
+}
+
 dependencies {
     implementation(project(":engine"))
     implementation(platform(libs.compose.bom))
@@ -61,6 +73,8 @@ dependencies {
     implementation(libs.datastore)
     implementation(libs.coroutines.android)
     implementation(libs.core.ktx)
+    implementation(libs.play.services.ads)
+    implementation(libs.ump)
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
     testImplementation(kotlin("test-junit"))
