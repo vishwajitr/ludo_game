@@ -38,4 +38,5 @@ dependencies {
     testImplementation(libs.coroutines.test)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test)
+    androidTestImplementation(libs.espresso.core) // pins the transitive 3.5.0, which breaks on API 37
 }
