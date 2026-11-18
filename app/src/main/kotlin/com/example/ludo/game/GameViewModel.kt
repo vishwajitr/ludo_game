@@ -2,6 +2,7 @@ package com.example.ludo.game
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -22,15 +23,14 @@ data class GameUiState(
     val message: String? = null,
 )
 
-/** A seat at the table: a human, or a bot of the given difficulty. */
-data class Seat(val name: String, val bot: Difficulty? = null)
-
 class GameViewModel(
     initial: GameState = newGame(defaultColors(4)),
     val seats: List<Seat> = initial.players.map { Seat(it.color.name.lowercase().replaceFirstChar(Char::uppercase)) },
     private val dice: DiceRoller = RandomDice,
     private val autoMove: Boolean = true,
     private val speed: Float = 1f,
+    /** Called whenever the game reaches a resting state (after a move or a forfeited turn): auto-save hook. */
+    private val onSettled: (GameState) -> Unit = {},
 ) : ViewModel() {
     private val bots = seats.map { seat -> seat.bot?.let { botFor(it) } }
     private val _state = MutableStateFlow(GameUiState(initial, initial.players.map { it.tokens }))
@@ -39,6 +39,12 @@ class GameViewModel(
     /** Engine events as they play out, for sound and haptics. */
     private val _events = MutableSharedFlow<GameEvent>(extraBufferCapacity = 64)
     val events: SharedFlow<GameEvent> = _events.asSharedFlow()
+
+    private val paused = MutableStateFlow(false)
+    fun setPaused(p: Boolean) { paused.value = p }
+
+    /** Stops bots and animations; call when the game is discarded. */
+    fun close() = viewModelScope.cancel()
 
     init { maybeBot() }
 
@@ -62,7 +68,7 @@ class GameViewModel(
                 val moves = legalMoves(r.state)
                 val bot = bots[r.state.current]
                 if (bot != null) {
-                    delay(botDelay())
+                    delay(botDelay()); paused.first { !it }
                     play(r.state, bot.choose(r.state, moves))
                 } else if (autoMove && moves.size == 1) {
                     delay(wait(350))
@@ -73,6 +79,7 @@ class GameViewModel(
                 _state.update { it.copy(message = if (why == ForfeitReason.TRIPLE_SIX) "Three sixes! Turn lost" else "No move") }
                 delay(wait(900))
                 _state.update { it.copy(game = r.state, message = null, busy = false) }
+                onSettled(r.state)
                 maybeBot()
             }
         }
@@ -109,6 +116,7 @@ class GameViewModel(
             }
         }
         _state.update { it.copy(game = r.state, shown = r.state.players.map { p -> p.tokens }, busy = false) }
+        onSettled(r.state)
         maybeBot()
     }
 
@@ -118,7 +126,7 @@ class GameViewModel(
     private fun maybeBot() {
         val g = _state.value.game
         if (g.phase != Phase.ROLLING || bots[g.current] == null) return
-        viewModelScope.launch { delay(botDelay()); roll() }
+        viewModelScope.launch { delay(botDelay()); paused.first { !it }; roll() }
     }
 
     private fun setShown(player: Int, token: Int, pos: Int) = _state.update { st ->
