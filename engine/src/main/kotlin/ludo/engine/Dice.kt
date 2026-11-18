@@ -9,3 +9,7 @@ class SeededDice(seed: Long) : DiceRoller {
     private val rnd = Random(seed)
     override fun roll() = rnd.nextInt(1, 7)
 }
+
+object RandomDice : DiceRoller {
+    override fun roll() = Random.nextInt(1, 7)
+}
