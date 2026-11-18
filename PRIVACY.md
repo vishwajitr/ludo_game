@@ -47,6 +47,6 @@ If the App changes how it handles data, for example by adding ads or online play
 
 ## Contact
 
-For any questions about this policy, email [your-email@example.com].
+For any questions about this policy, email vishwajitrikame@gmail.com.
 
 Developer: Vishwajit, Maharashtra, India
