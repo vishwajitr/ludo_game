@@ -15,7 +15,7 @@ android {
     namespace = "com.example.ludo"
     compileSdk = 37
     defaultConfig {
-        applicationId = "com.example.ludo"
+        applicationId = "com.vishwajitr.ludo" // namespace (code package) stays com.example.ludo
         minSdk = 26
         targetSdk = 37
         versionCode = providers.gradleProperty("VERSION_CODE").get().toInt()
