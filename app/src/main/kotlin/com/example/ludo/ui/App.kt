@@ -42,7 +42,10 @@ fun LudoApp(vm: AppViewModel) {
                 Screen.Setup -> SetupScreen(setup, { c -> vm.updateSetup { c } }, vm::startGame) { vm.go(Screen.Home) }
                 Screen.Settings -> SettingsScreen(settings, vm::updateSettings) { vm.go(Screen.Home) }
                 Screen.HowTo -> HowToPlayScreen { vm.go(Screen.Home) }
-                Screen.Game -> game?.let { GameScreen(it, settings.haptics, vm::quit, vm::restart, vm::finish, fx = fx, colorblind = settings.colorblind) }
+                Screen.Game -> game?.let { GameScreen(it, settings.haptics, vm::quit, vm::restart, vm::finish, fx = fx, colorblind = settings.colorblind,
+                        sound = settings.sound, music = settings.music,
+                        onSoundChange = { v -> vm.updateSettings { it.copy(sound = v) } },
+                        onMusicChange = { v -> vm.updateSettings { it.copy(music = v) } }) }
                     ?: LaunchedEffect(Unit) { vm.go(Screen.Home) }
                 is Screen.Results -> ResultsScreen(s.ranking, vm::restart) { vm.quit() }
             }

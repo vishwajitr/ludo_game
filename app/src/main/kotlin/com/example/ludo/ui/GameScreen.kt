@@ -34,31 +34,42 @@ fun GameScreen(
     modifier: Modifier = Modifier,
     fx: SoundFx? = null,
     colorblind: Boolean = false,
+    sound: Boolean = true,
+    music: Boolean = true,
+    onSoundChange: (Boolean) -> Unit = {},
+    onMusicChange: (Boolean) -> Unit = {},
 ) {
     var showPause by rememberSaveable { mutableStateOf(false) }
     fun pause(p: Boolean) { showPause = p; vm.setPaused(p) }
     BackHandler { pause(true) }
     val ui by vm.state.collectAsStateWithLifecycle()
     val haptic = LocalHapticFeedback.current
+    fun colorOf(player: Int) = vm.state.value.game.players[player].color
 
     LaunchedEffect(ui.game.phase) { if (ui.game.phase == Phase.GAME_OVER) { delay(1200); onFinished() } }
     LaunchedEffect(vm) {
         vm.events.collect { e ->
             when (e) {
-                is GameEvent.Captured -> { fx?.play(Sfx.CAPTURE); if (haptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress) }
-                is GameEvent.ReachedHome -> fx?.play(Sfx.HOME)
+                is GameEvent.Captured -> { fx?.play(Sfx.CAPTURE, colorOf(e.by)); if (haptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress) }
+                is GameEvent.ReachedHome -> fx?.play(Sfx.HOME, colorOf(e.player))
                 is GameEvent.GameOver -> fx?.play(Sfx.WIN)
                 else -> {}
             }
         }
     }
-    LaunchedEffect(vm) { vm.hops.collect { fx?.play(Sfx.STEP) } }
-    LaunchedEffect(ui.rolling) { if (ui.rolling) fx?.play(Sfx.ROLL) }
+    LaunchedEffect(vm) { vm.hops.collect { fx?.play(Sfx.STEP, colorOf(it)) } }
+    LaunchedEffect(ui.rolling) { if (ui.rolling) fx?.play(Sfx.ROLL, colorOf(ui.game.current)) }
 
     if (showPause) AlertDialog(
         onDismissRequest = { pause(false) },
         title = { Text("Paused") },
-        text = { Text("Progress is saved after every move.") },
+        text = {
+            Column {
+                Text("Progress is saved after every move.")
+                SwitchRow("Sound effects", sound, onSoundChange)
+                SwitchRow("Music", music, onMusicChange)
+            }
+        },
         confirmButton = { TextButton({ pause(false) }, Modifier.heightIn(min = 48.dp)) { Text("Resume") } },
         dismissButton = {
             Row {

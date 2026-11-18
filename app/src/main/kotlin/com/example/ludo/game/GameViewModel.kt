@@ -40,9 +40,9 @@ class GameViewModel(
     private val _events = MutableSharedFlow<GameEvent>(extraBufferCapacity = 64)
     val events: SharedFlow<GameEvent> = _events.asSharedFlow()
 
-    /** One emission per square a token hops, for the step sound. */
-    private val _hops = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
-    val hops: SharedFlow<Unit> = _hops.asSharedFlow()
+    /** One emission (the moving player) per square a token hops, for the step sound. */
+    private val _hops = MutableSharedFlow<Int>(extraBufferCapacity = 16)
+    val hops: SharedFlow<Int> = _hops.asSharedFlow()
 
     private val paused = MutableStateFlow(false)
     fun setPaused(p: Boolean) { paused.value = p }
@@ -107,7 +107,7 @@ class GameViewModel(
                 is GameEvent.Moved -> {
                     // hop square by square; leaving the yard is a single hop
                     val path = if (e.from == YARD) listOf(0) else (e.from + 1..e.to).toList()
-                    for (p in path) { setShown(e.player, e.token, p); _hops.tryEmit(Unit); delay(wait(120)) }
+                    for (p in path) { setShown(e.player, e.token, p); _hops.tryEmit(e.player); delay(wait(120)) }
                 }
                 is GameEvent.Captured -> {
                     _state.update { it.copy(flash = setOf(e.victim to e.token)) }
