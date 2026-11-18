@@ -66,8 +66,8 @@ fun GameScreen(
         text = {
             Column {
                 Text("Progress is saved after every move.")
-                SwitchRow("Sound effects", sound, onSoundChange)
-                SwitchRow("Music", music, onMusicChange)
+                SwitchRow("Sound effects", sound, onChange = onSoundChange)
+                SwitchRow("Music", music, onChange = onMusicChange)
             }
         },
         confirmButton = { TextButton({ pause(false) }, Modifier.heightIn(min = 48.dp)) { Text("Resume") } },
