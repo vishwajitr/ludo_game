@@ -16,6 +16,7 @@ data class Settings(
     val animSpeed: Int = 1, // 1x or 2x
     val autoMove: Boolean = true,
     val dark: Boolean = false,
+    val colorblind: Boolean = false, // shapes on tokens
     val rules: Rules = Rules(), // default house rules for new games
 )
 
@@ -27,6 +28,7 @@ private val HAPTICS = booleanPreferencesKey("haptics")
 private val SPEED = intPreferencesKey("speed")
 private val AUTO = booleanPreferencesKey("auto")
 private val DARK = booleanPreferencesKey("dark")
+private val CBLIND = booleanPreferencesKey("colorblind")
 private val BLOCK = booleanPreferencesKey("blockades")
 private val MUST = booleanPreferencesKey("mustCapture")
 private val ONE_OUT = booleanPreferencesKey("oneOut")
@@ -38,7 +40,7 @@ class AppContainer(context: Context) {
 
     val settings: Flow<Settings> = ds.data.map { p ->
         Settings(
-            p[SOUND] ?: true, p[MUSIC] ?: true, p[HAPTICS] ?: true, p[SPEED] ?: 1, p[AUTO] ?: true, p[DARK] ?: false,
+            p[SOUND] ?: true, p[MUSIC] ?: true, p[HAPTICS] ?: true, p[SPEED] ?: 1, p[AUTO] ?: true, p[DARK] ?: false, p[CBLIND] ?: false,
             Rules(p[BLOCK] ?: false, p[MUST] ?: false, p[ONE_OUT] ?: false, p[ONE_SIX] ?: false),
         )
     }
@@ -47,7 +49,7 @@ class AppContainer(context: Context) {
         val n = f(settings.first())
         ds.edit {
             it[SOUND] = n.sound; it[MUSIC] = n.music; it[HAPTICS] = n.haptics; it[SPEED] = n.animSpeed
-            it[AUTO] = n.autoMove; it[DARK] = n.dark
+            it[AUTO] = n.autoMove; it[DARK] = n.dark; it[CBLIND] = n.colorblind
             it[BLOCK] = n.rules.blockades; it[MUST] = n.rules.mustCaptureToEnterHome
             it[ONE_OUT] = n.rules.startWithOneOut; it[ONE_SIX] = n.rules.oneOrSixToLeave
         }

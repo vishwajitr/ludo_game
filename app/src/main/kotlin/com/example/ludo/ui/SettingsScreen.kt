@@ -18,6 +18,7 @@ fun SettingsScreen(s: Settings, update: ((Settings) -> Settings) -> Unit, onBack
         SwitchRow("Haptics", s.haptics) { v -> update { it.copy(haptics = v) } }
         SwitchRow("Auto-move when only one move", s.autoMove) { v -> update { it.copy(autoMove = v) } }
         SwitchRow("Dark mode", s.dark) { v -> update { it.copy(dark = v) } }
+        SwitchRow("Colorblind mode (shapes on tokens)", s.colorblind) { v -> update { it.copy(colorblind = v) } }
         Text("Animation speed")
         ChipRow(listOf("1x" to 1, "2x" to 2), s.animSpeed) { v -> update { it.copy(animSpeed = v) } }
         Text("Default house rules", style = MaterialTheme.typography.titleMedium)

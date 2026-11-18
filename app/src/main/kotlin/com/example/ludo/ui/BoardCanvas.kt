@@ -1,14 +1,12 @@
 package com.example.ludo.ui
 
 import androidx.compose.animation.core.*
-import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.input.pointer.pointerInput
-import kotlin.math.hypot
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -16,18 +14,30 @@ import androidx.compose.ui.graphics.Color as UiColor
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.dp
 import ludo.engine.*
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.sin
 
 private val GridLine = UiColor(0xFF9E9E9E)
+
+private data class Tk(val player: Int, val index: Int, val color: Color, val pos: Int, val point: P)
+
+private fun describe(t: Tk, name: String) = "$name token ${t.index + 1}, " + when {
+    t.pos == YARD -> "in yard"
+    t.pos == HOME -> "home"
+    t.pos > LAST_TRACK -> "in home column"
+    else -> "${t.pos} steps from start"
+}
 
 @Composable
 fun BoardCanvas(
@@ -36,31 +46,33 @@ fun BoardCanvas(
     movable: Set<Int> = emptySet(),
     flash: Set<Pair<Int, Int>> = emptySet(),
     hopMs: Int = 120,
+    colorblind: Boolean = false,
     onTokenTap: (Int) -> Unit = {},
 ) {
-    val measurer = rememberTextMeasurer()
     val active = state.players[state.current].color
     val tokens = state.players.flatMapIndexed { pi, p ->
         p.tokens.mapIndexed { ti, pos -> Tk(pi, ti, p.color, pos, BoardGeometry.tokenPoint(p.color, pos, ti)) }
     }
-    // hop between squares, slide faster/slower back to the yard
-    val anim = tokens.map {
-        animateOffsetAsState(Offset(it.point.x, it.point.y), tween(if (it.pos == YARD) 350 else hopMs, easing = LinearEasing), label = "token")
+    BoxWithConstraints(modifier.aspectRatio(1f).semantics { contentDescription = "Ludo board, ${active.label}'s turn" }) {
+        BoardBackground(Modifier.fillMaxSize().graphicsLayer(), active, colorblind) // static: cached, not redrawn per animation frame
+        TokenLayer(state, tokens, movable, flash, hopMs, colorblind, onTokenTap, Modifier.fillMaxSize())
+        // accessibility: one node per token, 48dp focus area, actionable when it can move (touches are handled by the canvas)
+        val u = maxWidth / BoardGeometry.SIZE
+        for (t in tokens) {
+            val canMove = t.player == state.current && t.index in movable
+            Box(
+                Modifier.offset(u * t.point.x - 24.dp, u * t.point.y - 24.dp).size(48.dp).semantics {
+                    contentDescription = describe(t, t.color.label) + if (canMove) ", can move" else ""
+                    if (canMove) onClick("Move") { onTokenTap(t.index); true }
+                },
+            )
+        }
     }
-    val pulse by rememberInfiniteTransition(label = "pulse")
-        .animateFloat(.9f, 1.3f, infiniteRepeatable(tween(600), RepeatMode.Reverse), label = "pulse")
-    Canvas(
-        modifier.aspectRatio(1f)
-            .semantics { contentDescription = "Ludo board, ${active.label}'s turn" }
-            .pointerInput(tokens, movable) {
-                detectTapGestures { tap ->
-                    val u = size.width / BoardGeometry.SIZE
-                    tokens.filter { it.player == state.current && it.index in movable }
-                        .map { it to hypot(tap.x - it.point.x * u, tap.y - it.point.y * u) }
-                        .minByOrNull { it.second }?.takeIf { it.second < u * .75f }?.let { onTokenTap(it.first.index) }
-                }
-            },
-    ) {
+}
+
+@Composable
+private fun BoardBackground(modifier: Modifier, active: Color, colorblind: Boolean) {
+    Canvas(modifier) {
         val u = size.width / BoardGeometry.SIZE
         fun px(p: P) = Offset(p.x * u, p.y * u)
         fun cell(rc: Pair<Int, Int>, fill: UiColor) {
@@ -74,6 +86,7 @@ fun BoardCanvas(
             drawRect(color.ui, Offset(c0 * u, r0 * u), Size(6 * u, 6 * u))
             drawRect(UiColor.White, Offset((c0 + 1) * u, (r0 + 1) * u), Size(4 * u, 4 * u))
             repeat(4) { drawCircle(color.ui.copy(alpha = .35f), u * .6f, px(BoardGeometry.yardSlot(color, it))) }
+            if (colorblind) shape(color, px(P(c0 + 3f, r0 + 3f)), u * .5f, color.ui.copy(alpha = .5f)) // pattern marker in each yard
             if (color == active) // highlight the active player's yard
                 drawRect(UiColor.Black, Offset(c0 * u, r0 * u), Size(6 * u, 6 * u), style = Stroke(u * .2f))
         }
@@ -85,7 +98,6 @@ fun BoardCanvas(
         }
         for (color in Color.entries) BoardGeometry.homeColumn(color).forEach { cell(it, color.ui) }
 
-        // home triangles
         val c = px(P(7.5f, 7.5f))
         fun tri(a: P, b: P, color: UiColor) = drawPath(
             Path().apply { moveTo(px(a).x, px(a).y); lineTo(px(b).x, px(b).y); lineTo(c.x, c.y); close() }, color,
@@ -94,20 +106,45 @@ fun BoardCanvas(
         tri(P(6f, 6f), P(9f, 6f), Color.GREEN.ui)
         tri(P(9f, 6f), P(9f, 9f), Color.YELLOW.ui)
         tri(P(6f, 9f), P(9f, 9f), Color.BLUE.ui)
+    }
+}
 
-        // tokens, stacked ones offset with a count badge
-        val index = tokens.withIndex().associate { (i, t) -> t to i }
-        tokens.groupBy { it.point }.forEach { (_, group) ->
-            group.forEachIndexed { i, t ->
-                val at = Offset(anim[index.getValue(t)].value.x * u + i * u * .12f, anim[index.getValue(t)].value.y * u - i * u * .12f)
+@Composable
+private fun TokenLayer(
+    state: GameState, tokens: List<Tk>, movable: Set<Int>, flash: Set<Pair<Int, Int>>,
+    hopMs: Int, colorblind: Boolean, onTokenTap: (Int) -> Unit, modifier: Modifier,
+) {
+    val measurer = rememberTextMeasurer()
+    // hop between squares; slide back to the yard at a calmer pace
+    val anim = tokens.map {
+        animateOffsetAsState(Offset(it.point.x, it.point.y), tween(if (it.pos == YARD) 350 else hopMs, easing = LinearEasing), label = "token")
+    }
+    val pulse by rememberInfiniteTransition(label = "pulse")
+        .animateFloat(.9f, 1.3f, infiniteRepeatable(tween(600), RepeatMode.Reverse), label = "pulse")
+    val groups = remember(tokens) { tokens.indices.groupBy { tokens[it].point }.values.toList() }
+
+    Canvas(
+        modifier.pointerInput(tokens, movable) {
+            detectTapGestures { tap ->
+                val u = size.width / BoardGeometry.SIZE
+                tokens.filter { it.player == state.current && it.index in movable }
+                    .map { it to hypot(tap.x - it.point.x * u, tap.y - it.point.y * u) }
+                    .minByOrNull { it.second }?.takeIf { it.second < u * .75f }?.let { onTokenTap(it.first.index) }
+            }
+        },
+    ) {
+        val u = size.width / BoardGeometry.SIZE
+        groups.forEach { group -> // stacked tokens are offset, with a count badge
+            group.forEachIndexed { i, ti ->
+                val t = tokens[ti]
+                val at = anim[ti].value * u + Offset(i * u * .12f, -i * u * .12f)
                 if (t.player to t.index in flash) drawCircle(UiColor(0xFFFF6F00), u * .9f, at, style = Stroke(u * .15f))
                 if (t.player == state.current && t.index in movable)
                     drawCircle(UiColor.White, u * .36f * pulse * 1.25f, at, style = Stroke(u * .12f))
-                token(t.color.ui, at, u * .36f)
+                token(t.color, at, u * .36f, colorblind)
             }
             if (group.size > 1) {
-                val base = group.first()
-                val at = anim[index.getValue(base)].value * u + Offset(u * .3f, -u * .3f)
+                val at = anim[group.first()].value * u + Offset(u * .3f, -u * .3f)
                 drawCircle(UiColor.Black, u * .2f, at)
                 val layout = measurer.measure(group.size.toString(), TextStyle(UiColor.White, (u * .28f).toSp(), FontWeight.Bold))
                 drawText(layout, topLeft = at - Offset(layout.size.width / 2f, layout.size.height / 2f))
@@ -116,11 +153,33 @@ fun BoardCanvas(
     }
 }
 
-private data class Tk(val player: Int, val index: Int, val color: Color, val pos: Int, val point: P)
+/** Colorblind mode: circle (red), square (green), triangle (yellow), diamond (blue). Otherwise always a circle. */
+private fun DrawScope.shape(color: Color, at: Offset, r: Float, fill: UiColor) {
+    when (color) {
+        Color.RED -> drawCircle(fill, r, at)
+        Color.GREEN -> drawRect(fill, at - Offset(r * .85f, r * .85f), Size(r * 1.7f, r * 1.7f))
+        Color.YELLOW -> drawPath(poly(at, r, 3, -PI / 2), fill)
+        Color.BLUE -> drawPath(poly(at, r, 4, -PI / 2), fill)
+    }
+}
 
-private fun DrawScope.token(color: UiColor, at: Offset, r: Float) {
+private fun poly(at: Offset, r: Float, n: Int, start: Double) = Path().apply {
+    for (i in 0 until n) {
+        val a = start + i * 2 * PI / n
+        val x = at.x + (r * 1.1f * cos(a)).toFloat(); val y = at.y + (r * 1.1f * sin(a)).toFloat()
+        if (i == 0) moveTo(x, y) else lineTo(x, y)
+    }
+    close()
+}
+
+private fun DrawScope.token(color: Color, at: Offset, r: Float, colorblind: Boolean) {
+    if (colorblind) {
+        shape(color, at, r, UiColor.Black)
+        shape(color, at, r * .8f, color.ui)
+        return
+    }
     drawCircle(UiColor.Black, r, at)
-    drawCircle(color, r * .85f, at)
+    drawCircle(color.ui, r * .85f, at)
     drawCircle(UiColor.White.copy(alpha = .45f), r * .35f, at - Offset(r * .25f, r * .25f))
 }
 
