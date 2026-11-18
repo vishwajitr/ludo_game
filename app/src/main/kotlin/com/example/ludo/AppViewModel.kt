@@ -15,6 +15,7 @@ sealed interface Screen {
     data object Game : Screen
     data object Settings : Screen
     data object HowTo : Screen
+    data object Leaderboard : Screen
     data class Results(val ranking: List<Pair<Seat, Color>>) : Screen
 }
 
@@ -28,6 +29,7 @@ data class SetupConfig(
 class AppViewModel(private val c: AppContainer) : ViewModel() {
     val settings = c.settings.stateIn(viewModelScope, SharingStarted.Eagerly, Settings())
     val saved = c.savedGame.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    val history = c.history.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val _screen = MutableStateFlow<Screen>(Screen.Home)
     val screen = _screen.asStateFlow()
@@ -39,6 +41,7 @@ class AppViewModel(private val c: AppContainer) : ViewModel() {
     fun go(s: Screen) { _screen.value = s }
     fun openSetup() { _setup.update { it.copy(rules = settings.value.rules) }; go(Screen.Setup) }
     fun updateSetup(f: (SetupConfig) -> SetupConfig) = _setup.update(f)
+    fun clearHistory() { viewModelScope.launch { c.clearHistory() } }
     fun updateSettings(f: (Settings) -> Settings) { viewModelScope.launch { c.updateSettings(f) } }
 
     fun startGame() {
@@ -67,12 +70,18 @@ class AppViewModel(private val c: AppContainer) : ViewModel() {
     private fun begin(state: GameState, seats: List<Seat>) {
         _game.value?.close()
         val st = settings.value
-        _game.value = GameViewModel(state, seats, autoMove = st.autoMove, speed = st.animSpeed.toFloat(), onSettled = { persist(it, seats) })
-        persist(state, seats)
+        _game.value = GameViewModel(state, seats, autoMove = st.autoMove, speed = st.animSpeed.toFloat(), onSettled = { persist(it, seats, record = true) })
+        persist(state, seats, record = false)
         go(Screen.Game)
     }
 
-    private fun persist(s: GameState, seats: List<Seat>) {
-        viewModelScope.launch { if (s.phase == Phase.GAME_OVER) c.clearGame() else c.saveGame(SavedGame(s, seats)) }
+    private fun persist(s: GameState, seats: List<Seat>, record: Boolean) {
+        viewModelScope.launch {
+            if (s.phase != Phase.GAME_OVER) c.saveGame(SavedGame(s, seats))
+            else {
+                c.clearGame()
+                if (record) c.addRecord(recordOf(s, seats, System.currentTimeMillis())) // finished games feed the leaderboard
+            }
+        }
     }
 }

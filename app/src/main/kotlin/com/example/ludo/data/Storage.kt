@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.*
+import ludo.engine.GameRecord
+import ludo.engine.HistoryCodec
 import ludo.engine.Rules
 import ludo.engine.SaveCodec
 import ludo.engine.SavedGame
@@ -34,6 +36,8 @@ private val MUST = booleanPreferencesKey("mustCapture")
 private val ONE_OUT = booleanPreferencesKey("oneOut")
 private val ONE_SIX = booleanPreferencesKey("oneOrSix")
 private val SAVED = stringPreferencesKey("savedGame")
+private val HISTORY = stringPreferencesKey("history")
+private const val MAX_RECORDS = 200
 
 class AppContainer(context: Context) {
     private val ds = context.applicationContext.store
@@ -58,4 +62,11 @@ class AppContainer(context: Context) {
     val savedGame: Flow<SavedGame?> = ds.data.map { p -> p[SAVED]?.let(SaveCodec::decode) }
     suspend fun saveGame(g: SavedGame) { ds.edit { it[SAVED] = SaveCodec.encode(g) } }
     suspend fun clearGame() { ds.edit { it.remove(SAVED) } }
+
+    /** Finished games, newest first (kept locally; capped so the file stays small). */
+    val history: Flow<List<GameRecord>> = ds.data.map { p -> HistoryCodec.decode(p[HISTORY].orEmpty()) }
+    suspend fun addRecord(r: GameRecord) {
+        ds.edit { p -> p[HISTORY] = HistoryCodec.encode((listOf(r) + HistoryCodec.decode(p[HISTORY].orEmpty())).take(MAX_RECORDS)) }
+    }
+    suspend fun clearHistory() { ds.edit { it.remove(HISTORY) } }
 }

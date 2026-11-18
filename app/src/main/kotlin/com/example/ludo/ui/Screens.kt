@@ -23,7 +23,7 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 @Composable
-fun HomeScreen(canContinue: Boolean, onContinue: () -> Unit, onNew: () -> Unit, onHowTo: () -> Unit, onSettings: () -> Unit) {
+fun HomeScreen(canContinue: Boolean, onContinue: () -> Unit, onNew: () -> Unit, onHowTo: () -> Unit, onLeaderboard: () -> Unit, onSettings: () -> Unit) {
     Column(
         Modifier.fillMaxSize().padding(32.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
@@ -35,6 +35,7 @@ fun HomeScreen(canContinue: Boolean, onContinue: () -> Unit, onNew: () -> Unit, 
         if (canContinue) Button(onContinue, m) { Text("Continue") }
         if (canContinue) OutlinedButton(onNew, m) { Text("New game") } else Button(onNew, m) { Text("New game") }
         OutlinedButton(onHowTo, m) { Text("How to play") }
+        OutlinedButton(onLeaderboard, m) { Text("Leaderboard") }
         OutlinedButton(onSettings, m) { Text("Settings") }
     }
 }

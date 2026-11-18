@@ -24,6 +24,7 @@ fun LudoApp(vm: AppViewModel) {
     val setup by vm.setup.collectAsStateWithLifecycle()
     val saved by vm.saved.collectAsStateWithLifecycle()
     val game by vm.game.collectAsStateWithLifecycle()
+    val history by vm.history.collectAsStateWithLifecycle()
 
     val ctx = LocalContext.current
     val fx = remember { SoundFx(ctx) }.also { it.enabled = settings.sound }
@@ -38,9 +39,10 @@ fun LudoApp(vm: AppViewModel) {
         Surface(Modifier.fillMaxSize().safeDrawingPadding()) {
             if (screen != Screen.Home && screen != Screen.Game) BackHandler { vm.go(Screen.Home) }
             when (val s = screen) {
-                Screen.Home -> HomeScreen(saved != null, vm::continueGame, vm::openSetup, { vm.go(Screen.HowTo) }, { vm.go(Screen.Settings) })
+                Screen.Home -> HomeScreen(saved != null, vm::continueGame, vm::openSetup, { vm.go(Screen.HowTo) }, { vm.go(Screen.Leaderboard) }, { vm.go(Screen.Settings) })
                 Screen.Setup -> SetupScreen(setup, { c -> vm.updateSetup { c } }, vm::startGame) { vm.go(Screen.Home) }
                 Screen.Settings -> SettingsScreen(settings, vm::updateSettings) { vm.go(Screen.Home) }
+                Screen.Leaderboard -> LeaderboardScreen(history, vm::clearHistory) { vm.go(Screen.Home) }
                 Screen.HowTo -> HowToPlayScreen { vm.go(Screen.Home) }
                 Screen.Game -> game?.let { GameScreen(it, settings.haptics, vm::quit, vm::restart, vm::finish, fx = fx, colorblind = settings.colorblind,
                         sound = settings.sound, music = settings.music,
