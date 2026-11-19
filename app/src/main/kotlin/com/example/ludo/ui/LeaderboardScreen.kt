@@ -8,7 +8,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.unit.dp
 import ludo.engine.*
 import java.text.DateFormat
@@ -24,6 +25,8 @@ fun LeaderboardScreen(records: List<GameRecord>, onClear: () -> Unit, onBack: ()
 
     if (confirmClear) AlertDialog(
         onDismissRequest = { confirmClear = false },
+        containerColor = Ludo.colors.raised,
+        shape = LudoShapes.large,
         title = { Text("Clear history?") },
         text = { Text("This deletes all ${records.size} finished games from this device. It can't be undone.") },
         confirmButton = { TextButton({ confirmClear = false; onClear() }, Modifier.heightIn(min = 48.dp)) { Text("Clear") } },
@@ -35,24 +38,25 @@ fun LeaderboardScreen(records: List<GameRecord>, onClear: () -> Unit, onBack: ()
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Column {
-                Text("Leaderboard", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                Text("Finished games on this device", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            ScreenHeader("Leaderboard", onBack, "Finished games on this device")
             if (records.isEmpty()) {
-                Section("No games yet") { Text("Finish a game and the results will show up here.") }
+                Section("No games yet") { Text("Finish a game and the results will show up here.", Modifier.padding(vertical = 8.dp), color = Ludo.colors.textMuted) }
             } else {
                 Section("Standings") {
                     SwitchRow("Include bots", includeBots) { includeBots = it }
-                    if (stats.isEmpty()) Text("No human players yet.")
+                    if (stats.isEmpty()) Text("No human players yet.", Modifier.padding(bottom = 8.dp), color = Ludo.colors.textMuted)
                     stats.forEachIndexed { i, s ->
                         Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("${i + 1}", Modifier.width(32.dp), style = MaterialTheme.typography.titleLarge)
-                            Column(Modifier.weight(1f)) {
-                                Text(label(s.name, s.bot), fontWeight = FontWeight.Medium)
-                                Text("${s.games} games · ${s.winPercent}% wins", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            val medal = listOf(Ludo.colors.accent, Ludo.colors.silver, Ludo.colors.bronze).getOrNull(i)
+                            Box(Modifier.size(32.dp).background(medal ?: Ludo.colors.raised, CircleShape), contentAlignment = Alignment.Center) {
+                                Text("${i + 1}", style = MaterialTheme.typography.titleSmall, color = if (medal != null) Ludo.colors.onMedal else Ludo.colors.text)
                             }
-                            Text("${s.wins} wins", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(label(s.name, s.bot), style = MaterialTheme.typography.titleSmall, color = Ludo.colors.text)
+                                Text("${s.games} games · ${s.winPercent}% wins", style = MaterialTheme.typography.bodySmall, color = Ludo.colors.textMuted)
+                            }
+                            Text("${s.wins} wins", style = MaterialTheme.typography.titleMedium, color = Ludo.colors.accent)
                         }
                     }
                 }
@@ -60,16 +64,13 @@ fun LeaderboardScreen(records: List<GameRecord>, onClear: () -> Unit, onBack: ()
                     val fmt = remember { DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT) }
                     records.take(10).forEach { r ->
                         Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                            Text(fmt.format(Date(r.time)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(r.players.sortedBy { it.rank }.joinToString("  ") { "${it.rank}. ${it.name}${if (it.bot != null) " (bot)" else ""}" })
+                            Text(fmt.format(Date(r.time)), style = MaterialTheme.typography.bodySmall, color = Ludo.colors.textMuted)
+                            Text(style = MaterialTheme.typography.bodyMedium, color = Ludo.colors.text, text = r.players.sortedBy { it.rank }.joinToString("  ") { "${it.rank}. ${it.name}${if (it.bot != null) " (bot)" else ""}" })
                         }
                     }
                 }
-                TextButton({ confirmClear = true }, Modifier.heightIn(min = 48.dp)) { Text("Clear history") }
+                TextButton({ confirmClear = true }, Modifier.heightIn(min = 48.dp)) { Text("Clear history", color = Ludo.colors.red) }
             }
-        }
-        Surface(tonalElevation = 3.dp) {
-            OutlinedButton(onBack, Modifier.fillMaxWidth().padding(16.dp).heightIn(min = 52.dp)) { Text("Back") }
         }
     }
 }

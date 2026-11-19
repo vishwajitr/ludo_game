@@ -25,11 +25,11 @@ class GameFlowTest {
         rule.onNodeWithContentDescription("Dice", substring = true).performClick()
         rule.waitUntil(5_000) { vm.state.value.movable.isNotEmpty() }
 
-        // tap the first red token in its yard (the pin stands about half a cell above its base point)
+        // tap the first red token in its yard (tokens are drawn centered on their point)
         val slot = BoardGeometry.yardSlot(Color.RED, 0)
         rule.onNodeWithContentDescription("Ludo board", substring = true).performTouchInput {
             val u = width / 15f
-            click(Offset(slot.x * u, (slot.y - .5f) * u))
+            click(Offset(slot.x * u, slot.y * u))
         }
         rule.waitUntil(5_000) { vm.state.value.game.players[0].tokens.contains(0) }
         assertEquals(1L, vm.state.value.game.players[0].tokens.count { it == 0 }.toLong())
