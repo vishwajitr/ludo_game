@@ -12,8 +12,9 @@ FONT = "/System/Library/Fonts/Helvetica.ttc"
 def crop(name, out, top, height):
     im = Image.open(os.path.join(RAW, name + ".png")).convert("RGB")
     im.crop((0, top, im.width, top + height)).save(os.path.join(SHOTS, out + ".png"), optimize=True)
-crop("1_home", "1-home", 120, 2160)
-crop("2_setup", "2-setup", 120, 2160)
+# Home and Setup have a banner ad at the bottom: keep the crop above it (store images must not show ads)
+crop("1_home", "1-home", 100, 2040)
+crop("2_setup", "2-setup", 100, 2040)
 crop("3_game", "3-game", 100, 1920)
 crop("4_game", "4-game", 100, 1920)
 
@@ -33,7 +34,7 @@ g = ImageDraw.Draw(fg)
 for y in range(H):  # subtle vertical gradient
     t = y / H
     g.line((0, y, W, y), fill=(int(11 + 10 * t), int(31 + 20 * t), int(68 + 30 * t)))
-board = Image.open(os.path.join(RAW, "3_game.png")).convert("RGB").crop((42, 270, 1038, 1266)).resize((400, 400), Image.LANCZOS)
+board = Image.open(os.path.join(RAW, "3_game.png")).convert("RGB").crop((42, 486, 1038, 1482)).resize((400, 400), Image.LANCZOS)
 mask = Image.new("L", board.size, 0)
 ImageDraw.Draw(mask).rounded_rectangle((0, 0, 400, 400), radius=24, fill=255)
 shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
