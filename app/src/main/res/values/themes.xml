@@ -1,3 +1,6 @@
 <resources>
-    <style name="Theme.Ludo" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Shown before Compose draws; keep the background in step with ActivePalette.ground in ui/Theme.kt -->
+    <style name="Theme.Ludo" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#FF0E1630</item>
+    </style>
 </resources>

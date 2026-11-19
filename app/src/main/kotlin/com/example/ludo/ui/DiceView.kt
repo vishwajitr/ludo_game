@@ -11,12 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.random.Random
@@ -28,7 +30,7 @@ private val PIPS = mapOf(
 )
 
 @Composable
-fun DiceView(value: Int, rolling: Boolean, enabled: Boolean, tint: Color, modifier: Modifier = Modifier, rollMs: Int = 600, onClick: () -> Unit) {
+fun DiceView(value: Int, rolling: Boolean, enabled: Boolean, tint: Color, modifier: Modifier = Modifier, rollMs: Int = 600, dim: Dp = 52.dp, onClick: () -> Unit) {
     var face by remember { mutableIntStateOf(value.coerceAtLeast(1)) }
     val spin = remember { Animatable(0f) }
     LaunchedEffect(rolling, value) {
@@ -39,16 +41,20 @@ fun DiceView(value: Int, rolling: Boolean, enabled: Boolean, tint: Color, modifi
     LaunchedEffect(rolling) { if (rolling) { spin.snapTo(0f); spin.animateTo(360f, tween(rollMs, easing = LinearEasing)) } else spin.snapTo(0f) }
     val label = if (value == 0) "Dice. Tap to roll" else "Dice, rolled $value" + if (enabled) ". Tap to roll" else ""
     Canvas(
-        modifier.size(72.dp) // >= 48dp touch target
+        modifier.size(dim) // >= 48dp touch target
             .graphicsLayer { if (rolling) { rotationX = spin.value; rotationY = spin.value * .7f; cameraDistance = 12f * density } }
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = label },
     ) {
-        drawRoundRect(Color.White, cornerRadius = CornerRadius(size.width * .18f))
-        drawRoundRect(tint, cornerRadius = CornerRadius(size.width * .18f), style = Stroke(size.width * .06f))
-        val cell = size.width / 3f
+        val r = CornerRadius(size.width * .22f)
+        val lift = size.height * .08f // the darker band under the face makes it read as a cube
+        drawRoundRect(Ludo.colors.diceSide, cornerRadius = r)
+        drawRoundRect(Brush.verticalGradient(listOf(Color.White, Ludo.colors.diceFace)), size = Size(size.width, size.height - lift), cornerRadius = r)
+        if (enabled) drawRoundRect(tint, size = Size(size.width, size.height - lift), cornerRadius = r, style = Stroke(size.width * .05f))
+        val inset = size.width * .14f
+        val cell = (size.width - 2 * inset) / 3f
         PIPS.getValue(face).forEach { i ->
-            drawCircle(Color.Black, cell * .17f, Offset((i % 3 + .5f) * cell, (i / 3 + .5f) * cell))
+            drawCircle(Ludo.colors.dicePip, cell * .22f, Offset(inset + (i % 3 + .5f) * cell, inset * .8f + (i / 3 + .5f) * cell))
         }
     }
 }

@@ -23,9 +23,6 @@ import com.example.ludo.Ads
 import com.example.ludo.AppViewModel
 import com.example.ludo.Screen
 
-/** Deep navy behind the game board. */
-private val GameBackdrop = androidx.compose.ui.graphics.Color(0xFF0B1F44)
-
 @Composable
 fun LudoApp(vm: AppViewModel, ads: Ads) {
     val settings by vm.settings.collectAsStateWithLifecycle()
@@ -45,21 +42,17 @@ fun LudoApp(vm: AppViewModel, ads: Ads) {
         if (settings.music && started.isAtLeast(Lifecycle.State.STARTED)) music.start() else music.pause()
     }
 
-    // status/navigation bar icons must contrast with the navy game backdrop
+    // status/navigation bar icons must contrast with the theme's background
     val view = LocalView.current
-    val lightBars = screen != Screen.Game && !settings.dark
+    val lightBars = !Ludo.colors.isDark
     SideEffect {
         (view.context as? android.app.Activity)?.window?.let {
             WindowCompat.getInsetsController(it, view).run { isAppearanceLightStatusBars = lightBars; isAppearanceLightNavigationBars = lightBars }
         }
     }
 
-    MaterialTheme(colorScheme = if (settings.dark) darkColorScheme() else lightColorScheme()) {
-        Surface(
-            Modifier.fillMaxSize(),
-            color = if (screen == Screen.Game) GameBackdrop else MaterialTheme.colorScheme.surface,
-            contentColor = if (screen == Screen.Game) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onSurface,
-        ) {
+    LudoTheme {
+        Surface(Modifier.fillMaxSize().ludoBackground(), color = androidx.compose.ui.graphics.Color.Transparent, contentColor = Ludo.colors.text) {
           Column(Modifier.fillMaxSize().safeDrawingPadding()) {
            Box(Modifier.weight(1f)) {
             if (screen != Screen.Home && screen != Screen.Game) BackHandler { vm.go(Screen.Home) }

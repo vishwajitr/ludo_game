@@ -41,6 +41,17 @@ Token positions are one number per token: `-1` yard, `0..50` main track (0 = the
 
 Dependencies are manual (no Hilt) and persistence is DataStore only (no Room).
 
+## Look and feel
+
+All colors, fonts and corner radii live in `app/src/main/kotlin/com/example/ludo/ui/Theme.kt`:
+
+- `MidnightRoyal` is the default palette (navy ground, gold accent, four player colors, board and dice colors).
+  Edit its values to restyle every screen; player highlight/shadow shades are derived from the four base colors.
+- `Daylight` is a ready-made light palette; switch with `val ActivePalette = Daylight`.
+  (Also update the window background in `res/values/themes.xml`, which shows before Compose draws.)
+- Fonts: Outfit (headings) and Inter (UI), bundled in `res/font` under the SIL Open Font License (`licenses/`).
+- Icons are line-art vectors in `ui/Icons.kt`; shared buttons, cards and headers are in `ui/Components.kt`.
+
 ## Rules summary
 
 - 2–4 players (Red, Green, Yellow, Blue), 4 tokens each; main track of 52 squares, a 5-square home column per color, then home.
