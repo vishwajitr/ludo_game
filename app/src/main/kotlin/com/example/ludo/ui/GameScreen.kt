@@ -168,12 +168,13 @@ fun GameScreen(
                 }
             }
         } else {
-            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 topBar()
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { card(0, Modifier.weight(1f)); card(1, Modifier.weight(1f)) }
-                boardView(Modifier.fillMaxWidth())
+                // full width when there is room; on short screens the board shrinks so the hint stays visible
+                boardView(Modifier.fillMaxWidth().weight(1f, fill = false))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { card(3, Modifier.weight(1f)); card(2, Modifier.weight(1f)) }
-                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.weight(.001f)) // pushes the hint to the bottom without taking space from the board
                 hint()
             }
         }
