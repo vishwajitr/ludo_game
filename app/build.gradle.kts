@@ -26,6 +26,7 @@ android {
         // ids in ~/.gradle/gradle.properties, which takes precedence and is never committed.
         manifestPlaceholders["admobAppId"] = providers.gradleProperty("ADMOB_APP_ID").get()
         buildConfigField("String", "ADMOB_BANNER_ID", "\"${providers.gradleProperty("ADMOB_BANNER_ID").get()}\"")
+        buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"${providers.gradleProperty("ADMOB_INTERSTITIAL_ID").get()}\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true; buildConfig = true }
@@ -44,6 +45,7 @@ android {
         debug {
             manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
             buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-3940256099942544/9214589741\"")
+            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
         }
         release {
             isMinifyEnabled = true
@@ -62,8 +64,8 @@ kotlin {
 // Shipping the test ad ids would earn nothing, so say so loudly when a release is built with them.
 tasks.configureEach {
     if (name == "bundleRelease" || name == "assembleRelease") doFirst {
-        if (providers.gradleProperty("ADMOB_APP_ID").get().contains("3940256099942544"))
-            logger.warn("WARNING: building a release with Google's TEST AdMob ids; set ADMOB_APP_ID and ADMOB_BANNER_ID in ~/.gradle/gradle.properties")
+        if (listOf("ADMOB_APP_ID", "ADMOB_BANNER_ID", "ADMOB_INTERSTITIAL_ID").any { providers.gradleProperty(it).get().contains("3940256099942544") })
+            logger.warn("WARNING: building a release with Google's TEST AdMob ids; set ADMOB_APP_ID, ADMOB_BANNER_ID and ADMOB_INTERSTITIAL_ID in ~/.gradle/gradle.properties")
     }
 }
 

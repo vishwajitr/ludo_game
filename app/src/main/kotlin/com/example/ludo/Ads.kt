@@ -16,6 +16,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.ump.ConsentInformation
@@ -27,7 +31,7 @@ import kotlin.concurrent.thread
 
 /**
  * AdMob behind Google's consent form (UMP): the SDK is only initialised, and ads only requested,
- * once consent allows it. Banners appear on menu screens only, never during a game.
+ * once consent allows it. Banners sit below the content; interstitials only at screen transitions.
  */
 class Ads(private val activity: Activity) {
     private val consent = UserMessagingPlatform.getConsentInformation(activity)
@@ -57,8 +61,34 @@ class Ads(private val activity: Activity) {
         if (!consent.canRequestAds() || initialising) return
         initialising = true
         MobileAds.setRequestConfiguration(RequestConfiguration.Builder().setMaxAdContentRating(RequestConfiguration.MAX_AD_CONTENT_RATING_PG).build())
-        thread { MobileAds.initialize(activity) { _ready.value = true } } // the SDK asks for a background thread
+        thread { MobileAds.initialize(activity) { activity.runOnUiThread { _ready.value = true; loadInterstitial() } } } // the SDK asks for a background thread
     }
+
+    private var interstitial: InterstitialAd? = null
+    private var lastShown = 0L
+
+    private fun loadInterstitial() {
+        InterstitialAd.load(activity, BuildConfig.ADMOB_INTERSTITIAL_ID, AdRequest.Builder().build(), object : InterstitialAdLoadCallback() {
+            override fun onAdLoaded(ad: InterstitialAd) { interstitial = ad }
+            override fun onAdFailedToLoad(e: LoadAdError) { interstitial = null }
+        })
+    }
+
+    /** Shows an interstitial if one is loaded and the cooldown has passed, then runs [then]; otherwise runs [then] at once. */
+    fun showInterstitial(then: () -> Unit) {
+        val ad = interstitial
+        val now = System.currentTimeMillis()
+        if (ad == null || now - lastShown < COOLDOWN_MS) return then()
+        interstitial = null
+        lastShown = now
+        ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+            override fun onAdDismissedFullScreenContent() { loadInterstitial(); then() }
+            override fun onAdFailedToShowFullScreenContent(e: com.google.android.gms.ads.AdError) { loadInterstitial(); then() }
+        }
+        ad.show(activity)
+    }
+
+    private companion object { const val COOLDOWN_MS = 120_000L } // ponytail: one fixed cap; tune from AdMob stats if needed
 }
 
 /** Anchored adaptive banner; draws nothing until ads are allowed. */

@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -17,6 +18,7 @@ import com.example.ludo.Music
 import com.example.ludo.SoundFx
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ludo.AdBanner
 import com.example.ludo.Ads
@@ -57,7 +59,7 @@ fun LudoApp(vm: AppViewModel, ads: Ads) {
            Box(Modifier.weight(1f)) {
             if (screen != Screen.Home && screen != Screen.Game) BackHandler { vm.go(Screen.Home) }
             when (val s = screen) {
-                Screen.Home -> HomeScreen(saved != null, vm::continueGame, vm::openSetup, { vm.go(Screen.HowTo) }, { vm.go(Screen.Leaderboard) }, { vm.go(Screen.Settings) })
+                Screen.Home -> HomeScreen(saved != null, { ads.showInterstitial(vm::continueGame) }, vm::openSetup, { vm.go(Screen.HowTo) }, { ads.showInterstitial { vm.go(Screen.Leaderboard) } }, { vm.go(Screen.Settings) })
                 Screen.Setup -> SetupScreen(setup, { c -> vm.updateSetup { c } }, vm::startGame) { vm.go(Screen.Home) }
                 Screen.Settings -> SettingsScreen(settings, vm::updateSettings, if (adPrivacy) ads::showPrivacyOptions else null) { vm.go(Screen.Home) }
                 Screen.Leaderboard -> LeaderboardScreen(history, vm::clearHistory) { vm.go(Screen.Home) }
@@ -70,8 +72,12 @@ fun LudoApp(vm: AppViewModel, ads: Ads) {
                 is Screen.Results -> ResultsScreen(s.ranking, vm::restart) { vm.quit() }
             }
            }
-           // banners on menu screens only: never on the board, in a turn, or on the results screen
-           if (screen == Screen.Home || screen == Screen.Setup || screen == Screen.Leaderboard) AdBanner(ads)
+           // banners below the content, never over the board; gap on the game screen keeps it away from the tappable cards
+           when (screen) {
+               Screen.Home, Screen.Setup, Screen.Leaderboard -> AdBanner(ads)
+               Screen.Game -> AdBanner(ads, Modifier.padding(top = 8.dp))
+               else -> {}
+           }
           }
         }
     }

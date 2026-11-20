@@ -99,7 +99,7 @@ fun GameScreen(
 
     val dice = @Composable {
         DiceView(
-            value = ui.diceValue, rolling = ui.rolling, tint = color.ui,
+            value = ui.diceValue, rolling = ui.rolling, tint = color.ui, rollMs = vm.rollMs,
             enabled = !ui.busy && g.phase == Phase.ROLLING && seat.bot == null,
         ) { if (haptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress); vm.onRoll() }
     }

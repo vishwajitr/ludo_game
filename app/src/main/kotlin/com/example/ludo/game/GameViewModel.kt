@@ -53,6 +53,7 @@ class GameViewModel(
     init { maybeBot() }
 
     val hopMs: Int get() = wait(120).toInt()
+    val rollMs: Int get() = wait(600).toInt()
     private fun wait(ms: Long) = (ms / speed).toLong()
 
     /** Human roll; ignored on a bot's turn. */
@@ -63,7 +64,7 @@ class GameViewModel(
         if (s.busy || s.game.phase != Phase.ROLLING) return
         _state.update { it.copy(busy = true, rolling = true, message = null) }
         viewModelScope.launch {
-            delay(wait(600))
+            delay(rollMs.toLong())
             val v = dice.roll()
             val r = applyRoll(s.game, v)
             r.events.forEach { _events.emit(it) }

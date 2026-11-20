@@ -1,7 +1,7 @@
 package com.example.ludo.ui
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
@@ -38,11 +38,11 @@ fun DiceView(value: Int, rolling: Boolean, enabled: Boolean, tint: Color, modifi
             while (true) { face = Random.nextInt(1, 7); delay(70) }
         } else if (value > 0) face = value
     }
-    LaunchedEffect(rolling) { if (rolling) { spin.snapTo(0f); spin.animateTo(360f, tween(rollMs, easing = LinearEasing)) } else spin.snapTo(0f) }
+    LaunchedEffect(rolling) { if (rolling) { spin.snapTo(0f); spin.animateTo(360f, tween(rollMs, easing = FastOutSlowInEasing)) } else spin.snapTo(0f) }
     val label = if (value == 0) "Dice. Tap to roll" else "Dice, rolled $value" + if (enabled) ". Tap to roll" else ""
     Canvas(
         modifier.size(dim) // >= 48dp touch target
-            .graphicsLayer { if (rolling) { rotationX = spin.value; rotationY = spin.value * .7f; cameraDistance = 12f * density } }
+            .graphicsLayer { if (rolling) { rotationX = spin.value; rotationY = spin.value * 2f; cameraDistance = 12f * density } }
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = label },
     ) {
