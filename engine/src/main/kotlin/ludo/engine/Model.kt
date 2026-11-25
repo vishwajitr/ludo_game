@@ -30,6 +30,7 @@ data class Rules(
     val mustCaptureToEnterHome: Boolean = false,
     val startWithOneOut: Boolean = false,
     val oneOrSixToLeave: Boolean = false,
+    val anyRollToLeave: Boolean = false, // any dice value takes a token out of the yard
 )
 
 data class Player(val color: Color, val tokens: List<Int>, val hasCaptured: Boolean = false) {

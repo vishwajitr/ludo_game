@@ -64,7 +64,7 @@ fun LudoApp(vm: AppViewModel, ads: Ads) {
                 Screen.Settings -> SettingsScreen(settings, vm::updateSettings, if (adPrivacy) ads::showPrivacyOptions else null) { vm.go(Screen.Home) }
                 Screen.Leaderboard -> LeaderboardScreen(history, vm::clearHistory) { vm.go(Screen.Home) }
                 Screen.HowTo -> HowToPlayScreen { vm.go(Screen.Home) }
-                Screen.Game -> game?.let { GameScreen(it, settings.haptics, vm::quit, vm::restart, vm::finish, fx = fx, colorblind = settings.colorblind,
+                Screen.Game -> game?.let { GameScreen(it, settings.haptics, vm::quit, vm::restart, { ads.showInterstitial(vm::finish) }, fx = fx, colorblind = settings.colorblind,
                         sound = settings.sound, music = settings.music,
                         onSoundChange = { v -> vm.updateSettings { it.copy(sound = v) } },
                         onMusicChange = { v -> vm.updateSettings { it.copy(music = v) } }) }

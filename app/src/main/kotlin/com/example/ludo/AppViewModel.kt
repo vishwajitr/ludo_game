@@ -22,7 +22,7 @@ sealed interface Screen {
 data class SetupConfig(
     val count: Int = 2,
     val seats: List<Seat> = listOf(Seat("Player 1"), Seat("Computer", Difficulty.MEDIUM), Seat("Player 3"), Seat("Player 4")),
-    val rules: Rules = Rules(),
+    val rules: Rules = Rules(anyRollToLeave = true),
 )
 
 /** Owns navigation, settings, the saved game and the running [GameViewModel]; survives rotation. */

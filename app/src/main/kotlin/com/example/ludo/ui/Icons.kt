@@ -30,6 +30,7 @@ object LudoIcons {
     val SoundOn = icon("M11 5L6 9H2v6h4l5 4V5z", "M15.5 8.5a5 5 0 0 1 0 7", "M19 5a10 10 0 0 1 0 14")
     val SoundOff = icon("M11 5L6 9H2v6h4l5 4V5z", "M22 9l-6 6", "M16 9l6 6")
     val Bot = icon("M7 8h10a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3z", "M12 8V4", "M9 14h.01", "M15 14h.01")
+    val Person = icon("M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8z", "M4.5 20.5a7.5 7.5 0 0 1 15 0", filled = true)
     val Trophy = icon("M8 21h8", "M12 17v4", "M7 4h10v5a5 5 0 0 1-10 0V4z", "M17 5h3v2a3 3 0 0 1-3 3", "M7 5H4v2a3 3 0 0 0 3 3")
     val Book = icon("M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z", "M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5")
     val Settings = icon(

@@ -21,6 +21,7 @@ import ludo.engine.*
 
 @Composable
 fun HouseRules(r: Rules, onChange: (Rules) -> Unit) {
+    SwitchRow("Leave yard on any roll", r.anyRollToLeave, "Off: you need a 6 to bring a token out") { onChange(r.copy(anyRollToLeave = it)) }
     SwitchRow("Blockades", r.blockades, "Two of your tokens on a square block passing") { onChange(r.copy(blockades = it)) }
     SwitchRow("Capture to enter home", r.mustCaptureToEnterHome, "Capture once before entering the home column") { onChange(r.copy(mustCaptureToEnterHome = it)) }
     SwitchRow("Start with one token out", r.startWithOneOut) { onChange(r.copy(startWithOneOut = it)) }
@@ -86,7 +87,7 @@ fun SetupScreen(cfg: SetupConfig, onChange: (SetupConfig) -> Unit, onStart: () -
                 ) {
                     Column(Modifier.weight(1f)) {
                         Text("House rules", style = MaterialTheme.typography.titleMedium, color = pal.text)
-                        val on = with(cfg.rules) { listOf(blockades, mustCaptureToEnterHome, startWithOneOut, oneOrSixToLeave).count { it } }
+                        val on = with(cfg.rules) { listOf(anyRollToLeave, blockades, mustCaptureToEnterHome, startWithOneOut, oneOrSixToLeave).count { it } }
                         Text(if (on == 0) "Classic rules" else "$on enabled", style = MaterialTheme.typography.bodySmall, color = pal.textMuted)
                     }
                     Icon(LudoIcons.Chevron, if (rulesOpen) "Hide house rules" else "Show house rules", Modifier.size(20.dp).rotate(if (rulesOpen) 90f else 0f), tint = pal.textMuted)

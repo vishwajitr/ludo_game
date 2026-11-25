@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.border
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -194,16 +196,30 @@ private fun PlayerCard(seat: Seat, color: Color, home: Int, active: Boolean, mod
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Box(Modifier.size(40.dp).background(color.ui, CircleShape), contentAlignment = Alignment.Center) {
-            if (seat.bot != null) Icon(LudoIcons.Bot, "Bot", Modifier.size(20.dp), tint = color.on)
-            else Text(seat.name.take(1).uppercase(), style = MaterialTheme.typography.titleLarge, color = color.on)
-        }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(seat.name, style = MaterialTheme.typography.titleSmall, color = c.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Row(
-                Modifier.semantics(mergeDescendants = true) { contentDescription = "$home of 4 tokens home" },
-                horizontalArrangement = Arrangement.spacedBy(3.dp),
-            ) { repeat(4) { Box(Modifier.size(8.dp).background(if (it < home) color.ui else c.track, CircleShape)) } }
+        // icons only: the name lives in the screen-reader label
+        Box(
+            Modifier.size(44.dp).background(Brush.linearGradient(listOf(color.ui.copy(alpha = .75f), color.ui)), CircleShape)
+                .border(2.dp, androidx.compose.ui.graphics.Color.White.copy(alpha = .25f), CircleShape)
+                .semantics { contentDescription = seat.name + if (seat.bot != null) ", computer" else "" },
+            contentAlignment = Alignment.Center,
+        ) { Icon(if (seat.bot != null) LudoIcons.Bot else LudoIcons.Person, null, Modifier.size(24.dp), tint = color.on) }
+        // 2x2 tokens, lit as each one reaches home
+        Column(
+            Modifier.weight(1f).semantics(mergeDescendants = true) { contentDescription = "$home of 4 tokens home" },
+            verticalArrangement = Arrangement.spacedBy(5.dp),
+        ) {
+            repeat(2) { r ->
+                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    repeat(2) { k ->
+                        val done = r * 2 + k < home // round token like on the board: filled in colour once home, a faint ring until then
+                        Box(
+                            Modifier.size(16.dp)
+                                .then(if (done) Modifier.background(Brush.radialGradient(0f to androidx.compose.ui.graphics.Color.White.copy(alpha = .6f), .45f to color.ui, 1f to color.ui, center = Offset(13f, 13f), radius = 34f), CircleShape) else Modifier)
+                                .border(2.dp, if (done) color.ui else c.textMuted.copy(alpha = .35f), CircleShape),
+                        )
+                    }
+                }
+            }
         }
         if (active) dice()
     }

@@ -20,7 +20,7 @@ fun legalMoves(s: GameState): List<Move> {
     val d = s.dice
     val all = me.tokens.withIndex().mapNotNull { (i, pos) ->
         val to = when {
-            pos == YARD -> if (d == 6 || (d == 1 && s.rules.oneOrSixToLeave)) 0 else return@mapNotNull null
+            pos == YARD -> if (d == 6 || s.rules.anyRollToLeave || (d == 1 && s.rules.oneOrSixToLeave)) 0 else return@mapNotNull null
             pos + d > HOME -> return@mapNotNull null // exact roll needed
             else -> pos + d
         }

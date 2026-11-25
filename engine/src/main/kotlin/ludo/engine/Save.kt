@@ -20,7 +20,7 @@ object SaveCodec {
         val s = g.state; val r = s.rules
         return listOf(
             "v1",
-            listOf(r.blockades, r.mustCaptureToEnterHome, r.startWithOneOut, r.oneOrSixToLeave).joinToString("") { if (it) "1" else "0" },
+            listOf(r.blockades, r.mustCaptureToEnterHome, r.startWithOneOut, r.oneOrSixToLeave, r.anyRollToLeave).joinToString("") { if (it) "1" else "0" },
             s.current, s.dice, s.consecutiveSixes, s.phase.name, s.winners.joinToString(","),
             s.players.joinToString("/") { "${it.color.name}:${it.tokens.joinToString(",")}:${if (it.hasCaptured) 1 else 0}" },
             g.seats.joinToString("/") { "${enc(it.name)}:${it.bot?.name ?: "-"}" },
@@ -29,8 +29,8 @@ object SaveCodec {
 
     fun decode(text: String): SavedGame? = runCatching {
         val p = text.split(";")
-        require(p.size == 9 && p[0] == "v1" && p[1].length == 4)
-        val rules = Rules(p[1][0] == '1', p[1][1] == '1', p[1][2] == '1', p[1][3] == '1')
+        require(p.size == 9 && p[0] == "v1" && p[1].length in 4..5) // 4 flags in saves from 1.0.1
+        val rules = Rules(p[1][0] == '1', p[1][1] == '1', p[1][2] == '1', p[1][3] == '1', p[1].getOrNull(4) == '1')
         val players = p[7].split("/").map { f ->
             val (c, t, cap) = f.split(":")
             Player(Color.valueOf(c), t.split(",").map { it.toInt() }.also { tk -> require(tk.size == 4 && tk.all { it in YARD..HOME }) }, cap == "1")

@@ -115,6 +115,13 @@ class EngineTest {
         assertTrue(s.players.all { it.tokens == listOf(0, Y, Y, Y) })
     }
 
+    @Test fun `any roll leaves yard`() {
+        val r = roll(game(idle, idle, rules = Rules(anyRollToLeave = true)), 3)
+        assertEquals(Phase.CHOOSING_MOVE, r.state.phase)
+        assertEquals(3, applyMove(r.state, legalMoves(r.state).first()).state.players[0].tokens.count { it == Y }) // token placed on start
+        assertEquals(Phase.ROLLING, roll(game(idle, idle), 3).state.phase) // classic: 3 can't leave
+    }
+
     @Test fun `one or six to leave yard`() {
         val s = game(idle, idle, rules = Rules(oneOrSixToLeave = true))
         val r = roll(s, 1)

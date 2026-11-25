@@ -19,7 +19,7 @@ data class Settings(
     val autoMove: Boolean = true,
     val dark: Boolean = false,
     val colorblind: Boolean = false, // shapes on tokens
-    val rules: Rules = Rules(), // default house rules for new games
+    val rules: Rules = Rules(anyRollToLeave = true), // default house rules for new games
 )
 
 private val Context.store: DataStore<Preferences> by preferencesDataStore("ludo")
@@ -35,6 +35,7 @@ private val BLOCK = booleanPreferencesKey("blockades")
 private val MUST = booleanPreferencesKey("mustCapture")
 private val ONE_OUT = booleanPreferencesKey("oneOut")
 private val ONE_SIX = booleanPreferencesKey("oneOrSix")
+private val ANY_ROLL = booleanPreferencesKey("anyRoll")
 private val SAVED = stringPreferencesKey("savedGame")
 private val HISTORY = stringPreferencesKey("history")
 private const val MAX_RECORDS = 200
@@ -45,7 +46,7 @@ class AppContainer(context: Context) {
     val settings: Flow<Settings> = ds.data.map { p ->
         Settings(
             p[SOUND] ?: true, p[MUSIC] ?: true, p[HAPTICS] ?: true, p[SPEED] ?: 1, p[AUTO] ?: true, p[DARK] ?: false, p[CBLIND] ?: false,
-            Rules(p[BLOCK] ?: false, p[MUST] ?: false, p[ONE_OUT] ?: false, p[ONE_SIX] ?: false),
+            Rules(p[BLOCK] ?: false, p[MUST] ?: false, p[ONE_OUT] ?: false, p[ONE_SIX] ?: false, p[ANY_ROLL] ?: true),
         )
     }
 
@@ -55,7 +56,7 @@ class AppContainer(context: Context) {
             it[SOUND] = n.sound; it[MUSIC] = n.music; it[HAPTICS] = n.haptics; it[SPEED] = n.animSpeed
             it[AUTO] = n.autoMove; it[DARK] = n.dark; it[CBLIND] = n.colorblind
             it[BLOCK] = n.rules.blockades; it[MUST] = n.rules.mustCaptureToEnterHome
-            it[ONE_OUT] = n.rules.startWithOneOut; it[ONE_SIX] = n.rules.oneOrSixToLeave
+            it[ONE_OUT] = n.rules.startWithOneOut; it[ONE_SIX] = n.rules.oneOrSixToLeave; it[ANY_ROLL] = n.rules.anyRollToLeave
         }
     }
 

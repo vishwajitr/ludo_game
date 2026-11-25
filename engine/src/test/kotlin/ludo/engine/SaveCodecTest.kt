@@ -4,7 +4,7 @@ import kotlin.test.*
 
 class SaveCodecTest {
     @Test fun `round trips a mid-game state with awkward names`() {
-        var s = newGame(defaultColors(3), Rules(blockades = true, oneOrSixToLeave = true))
+        var s = newGame(defaultColors(3), Rules(blockades = true, oneOrSixToLeave = true, anyRollToLeave = true))
         val dice = SeededDice(5)
         repeat(60) {
             s = applyRoll(s, dice.roll()).state
